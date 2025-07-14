@@ -1,0 +1,175 @@
+:root {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --accent-color: #007acc;
+    --card-bg: #f0f0f0;
+}
+
+[data-theme="dark"] {
+    --bg-color: #121212;
+    --text-color: #eeeeee;
+    --accent-color: #00b4d8;
+    --card-bg: #1e1e1e;
+}
+
+body {
+    margin: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 1rem;
+}
+
+header {
+    text-align: center;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+    header h1 {
+        font-size: clamp(1.8rem, 5vw, 2.5rem);
+        margin-bottom: 0.5rem;
+    }
+
+#themeToggle {
+    margin-top: 1rem;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    background-color: white;
+    color: var(--accent-color);
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+    #themeToggle:hover {
+        background-color: #f5f5f5;
+    }
+
+main {
+    padding: 2rem 0;
+}
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+    .gallery img {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+        aspect-ratio: 4 / 3;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: transform 0.3s ease;
+        cursor: pointer;
+    }
+
+        .gallery img:hover {
+            transform: scale(1.03);
+        }
+
+footer {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+    margin: 2rem 0;
+}
+
+/* Swiper overlay for fullscreen */
+.swiper-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.95);
+    display: none;
+    z-index: 9999;
+}
+
+    .swiper-overlay.show {
+        display: block;
+    }
+
+.swiper-container {
+    width: 100%;
+    height: 100%;
+    padding: 0 !important;
+}
+
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+    .swiper-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(255,255,255,0.3);
+        touch-action: pinch-zoom;
+        user-select: none;
+    }
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 2rem;
+    padding: 0.4rem 0.8rem;
+    background-color: rgba(0,0,0,0.4);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 10000;
+    transition: background 0.3s ease;
+}
+
+    .close-btn:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+/* Delete button for admin thumbnails */
+.delete-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background-color: crimson;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    padding: 0.3rem 0.5rem;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+#previewArea img {
+    width: 100%;
+    max-width: 300px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    margin-top: 1rem;
+}
+.caption {
+    font-size: 1rem;
+    margin-top: 0.4rem;
+    text-align: center;
+    color: var(--text-color);
+}

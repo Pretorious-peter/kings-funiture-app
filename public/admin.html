@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel with Cropper</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css" />
+    <style>
+        #cropContainer {
+            max-width: 100%;
+            margin-top: 1rem;
+        }
+
+            #cropContainer img {
+                max-width: 100%;
+                border-radius: 8px;
+            }
+
+        .crop-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ Admin Panel</h1>
+            <p>Crop and upload images</p>
+        </header>
+
+        <main>
+            <form id="uploadForm">
+                <input type="file" id="fileInput" accept="image/*" required />
+                <textarea id="captionInput" placeholder="Enter a caption..." rows="2"></textarea>
+                <div class="crop-controls">
+                    <button type="button" id="rotateLeft">⟲ Rotate Left</button>
+                    <button type="button" id="rotateRight">⟳ Rotate Right</button>
+                    <button type="submit">Upload Cropped</button>
+                </div>
+            </form>
+
+            <div id="cropContainer">
+                <img id="cropImage" style="display:none;" />
+            </div>
+
+            <h2>Uploaded Images</h2>
+            <div id="adminGallery" class="gallery"></div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.js"></script>
+    <script>
+        let cropper;
+        const fileInput = document.getElementById('fileInput');
+        const cropImage = document.getElementById('cropImage');
+        const cropContainer = document.getElementById('cropContainer');
+
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                cropImage.src = reader.result;
+                cropImage.style.display = 'block';
+
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: NaN,
+                    viewMode: 1,
+                    autoCropArea: 1
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+
+        document.getElementById('rotateLeft').onclick = () => {
+            if (cropper) cropper.rotate(-90);
+        };
+        document.getElementById('rotateRight').onclick = () => {
+            if (cropper) cropper.rotate(90);
+        };
+
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!cropper) return alert('Please select and crop an image first.');
+
+            const canvas = cropper.getCroppedCanvas();
+            if (!canvas) return alert('Cropping failed.');
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('image', blob, 'cropped.png');
+
+                const caption = captionInput.value.trim();
+                formData.append('caption', caption);
+
+                const res = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                alert(await res.text());
+                cropper.destroy();
+                cropImage.style.display = 'none';
+                fileInput.value = '';
+                captionInput.value = '';
+                loadImages();
+            });
+        };
+
+        async function loadImages() {
+            const res = await fetch('/images');
+            const images = await res.json();
+            const gallery = document.getElementById('adminGallery');
+            gallery.innerHTML = '';
+
+            if (!Array.isArray(images)) {
+                console.error('Invalid response from /images');
+                return;
+            }
+
+            images.forEach(({ name, caption }) => {
+                if (!name) return;
+
+                const container = document.createElement('div');
+                container.style.position = 'relative';
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.alignItems = 'center';
+
+                const img = document.createElement('img');
+                img.src = `/uploads/${name}`;
+                img.alt = caption || 'Uploaded';
+                img.onerror = () => {
+                    img.style.opacity = 0.3;
+                    img.title = 'Image not found';
+                };
+
+                const cap = document.createElement('div');
+                cap.className = 'caption';
+                cap.textContent = caption;
+
+                const delBtn = document.createElement('button');
+                delBtn.textContent = '🗑️';
+                delBtn.className = 'delete-btn';
+                delBtn.onclick = async () => {
+                    if (confirm('Delete this image?')) {
+                        await fetch(`/images/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                        loadImages();
+                    }
+                };
+
+                container.appendChild(img);
+                container.appendChild(cap);
+                container.appendChild(delBtn);
+                gallery.appendChild(container);
+            });
+        }   
+
+        loadImages();
+    </script>
+</body>
+</html>

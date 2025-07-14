@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <title>Peter's Gallery</title>
+    <link rel="stylesheet" href="https://unpkg.com/swiper@10/swiper-bundle.min.css" />
+    <script src="https://unpkg.com/swiper@10/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 Peter's Showcase</h1>
+            <button id="themeToggle">🌗 Toggle Theme</button>
+        </header>
+
+        <main>
+            <div id="gallery" class="gallery"></div>
+        </main>
+    </div>
+
+    <!-- Fullscreen Swiper Overlay -->
+    <div class="swiper-overlay" id="swiperOverlay" onclick="handleOverlayClick(event)">
+        <div class="swiper-container" onclick="event.stopPropagation()">
+            <div class="swiper-wrapper" id="swiperWrapper"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-pagination"></div>
+            <button class="close-btn" onclick="closeSwiper()">✖</button>
+        </div>
+    </div>
+
+    <script>
+        const root = document.documentElement;
+        const themeBtn = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        root.setAttribute('data-theme', savedTheme);
+
+        themeBtn.onclick = () => {
+            const newTheme = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        };
+
+        let swiper;
+        async function loadImages() {
+            const res = await fetch('/images');
+            const images = await res.json();
+            const gallery = document.getElementById('gallery');
+            const swiperWrapper = document.getElementById('swiperWrapper');
+
+            gallery.innerHTML = '';
+            swiperWrapper.innerHTML = '';
+
+            if (!Array.isArray(images)) {
+                console.error('Invalid response from /images');
+                return;
+            }
+
+            images.forEach(({ name, caption }, index) => {
+                if (!name) return;
+
+                // Thumbnail
+                const container = document.createElement('div');
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.alignItems = 'center';
+
+                const img = document.createElement('img');
+                img.src = `/uploads/${name}`;
+                img.alt = caption || 'Image';
+                img.onclick = () => openSwiper(index);
+                img.onerror = () => {
+                    img.style.opacity = 0.3;
+                    img.title = 'Image failed to load';
+                };
+
+                const cap = document.createElement('div');
+                cap.className = 'caption';
+                cap.textContent = caption;
+
+                container.appendChild(img);
+                container.appendChild(cap);
+                gallery.appendChild(container);
+
+                // Swiper slide
+                const slide = document.createElement('div');
+                slide.className = 'swiper-slide';
+                slide.innerHTML = `
+                  <figure>
+                    <img src="/uploads/${name}" alt="Slide" />
+                    <figcaption class="swiper-caption">${caption}</figcaption>
+                  </figure>
+                `;
+                swiperWrapper.appendChild(slide);
+            });
+        }
+
+        function openSwiper(startIndex = 0) {
+            document.body.classList.add('swiper-active');
+            document.getElementById('swiperOverlay').classList.add('show');
+            swiper = new Swiper('.swiper-container', {
+                initialSlide: startIndex,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev'
+                },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true
+                },
+                mousewheel: {
+                    invert: false
+                }
+            });
+        }
+
+        function closeSwiper() {
+            document.body.classList.remove('swiper-active');
+            document.getElementById('swiperOverlay').classList.remove('show');
+            swiper?.destroy();
+            swiper = null;
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target.id === 'swiperOverlay') closeSwiper();
+        }
+
+        document.getElementById('swiperOverlay').addEventListener('dblclick', closeSwiper);
+        document.getElementById('swiperOverlay').addEventListener('touchstart', e => {
+            window._touchY = e.touches[0].clientY;
+        });
+        document.getElementById('swiperOverlay').addEventListener('touchend', e => {
+            if (window._touchY - e.changedTouches[0].clientY > 80) closeSwiper();
+        });
+
+        loadImages();
+    </script>
+</body>
+</html>
